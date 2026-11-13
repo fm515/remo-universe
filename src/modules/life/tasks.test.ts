@@ -5,7 +5,7 @@ const task = (id: string, done = false): Task => ({ id, title: `Task ${id}`, don
 
 describe('tasks', () => {
   it('adds new tasks first, with a cleaned title and optional due date', () => {
-    const result = addTask([task('a')], '  buy   bread \\n', 'b', 5, '2026-12-01')
+    const result = addTask([task('a')], '  buy   bread \n', 'b', 5, '2026-12-01')
     expect(result).toEqual([{ id: 'b', title: 'buy bread', done: false, createdAt: 5, dueAt: '2026-12-01' }, task('a')])
     expect(addTask([], 'call home', 'c', 6)[0].dueAt).toBeNull()
   })
