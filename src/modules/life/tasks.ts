@@ -10,10 +10,16 @@ export interface Task {
   done: boolean
   /** Unix epoch milliseconds. */
   createdAt: number
+  /** Calendar date in YYYY-MM-DD form, or null when no due date is set. */
+  dueAt: string | null
 }
 
 export function normalizeTitle(input: string): string {
   return input.replace(/\s+/g, ' ').trim().slice(0, MAX_TITLE_LENGTH)
+}
+
+function normalizeDueDate(value: unknown): string | null {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null
 }
 
 /** Accepts anything read from storage; drops whatever is not a valid task. Never throws. */
@@ -23,7 +29,7 @@ export function parseTasks(raw: unknown): Task[] {
   const tasks: Task[] = []
   for (const item of raw) {
     if (typeof item !== 'object' || item === null) continue
-    const { id, title, done, createdAt } = item as Record<string, unknown>
+    const { id, title, done, createdAt, dueAt } = item as Record<string, unknown>
     if (typeof id !== 'string' || id === '' || seen.has(id)) continue
     if (typeof title !== 'string') continue
     const cleanTitle = normalizeTitle(title)
@@ -34,6 +40,7 @@ export function parseTasks(raw: unknown): Task[] {
       title: cleanTitle,
       done: done === true,
       createdAt: typeof createdAt === 'number' && Number.isFinite(createdAt) ? createdAt : 0,
+      dueAt: normalizeDueDate(dueAt),
     })
     if (tasks.length >= MAX_TASKS) break
   }
@@ -41,10 +48,10 @@ export function parseTasks(raw: unknown): Task[] {
 }
 
 /** Newest first. Returns the same array when the title is empty or the list is full. */
-export function addTask(tasks: Task[], title: string, id: string, now: number): Task[] {
+export function addTask(tasks: Task[], title: string, id: string, now: number, dueAt: string | null = null): Task[] {
   const cleanTitle = normalizeTitle(title)
   if (cleanTitle === '' || tasks.length >= MAX_TASKS) return tasks
-  return [{ id, title: cleanTitle, done: false, createdAt: now }, ...tasks]
+  return [{ id, title: cleanTitle, done: false, createdAt: now, dueAt: normalizeDueDate(dueAt) }, ...tasks]
 }
 
 export function toggleTask(tasks: Task[], id: string): Task[] {

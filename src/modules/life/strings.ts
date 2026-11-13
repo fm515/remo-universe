@@ -4,6 +4,8 @@ export const strings = {
   heading: { ar: 'مهامي', en: 'My tasks' },
   inputLabel: { ar: 'مهمة جديدة', en: 'New task' },
   placeholder: { ar: 'ما الذي تريد إنجازه؟', en: 'What do you want to get done?' },
+  dueDate: { ar: 'موعد الإنجاز', en: 'Due date' },
+  due: { ar: 'موعدها', en: 'Due' },
   add: { ar: 'إضافة', en: 'Add' },
   empty: { ar: 'لا توجد مهام بعد. أضف أول مهمة.', en: 'No tasks yet. Add your first one.' },
   remaining: { ar: 'متبقية', en: 'remaining' },
