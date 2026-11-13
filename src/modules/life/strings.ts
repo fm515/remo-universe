@@ -6,6 +6,12 @@ export const strings = {
   placeholder: { ar: 'ما الذي تريد إنجازه؟', en: 'What do you want to get done?' },
   dueDate: { ar: 'موعد الإنجاز', en: 'Due date' },
   due: { ar: 'موعدها', en: 'Due' },
+  reminders: { ar: 'التذكيرات', en: 'Reminders' },
+  addReminder: { ar: 'إضافة تذكير', en: 'Add reminder' },
+  saveReminder: { ar: 'حفظ التذكير', en: 'Save reminder' },
+  reminderDateTime: { ar: 'تاريخ ووقت التذكير', en: 'Reminder date and time' },
+  removeReminder: { ar: 'حذف التذكير', en: 'Delete reminder' },
+  reminderLimit: { ar: 'وصلت إلى الحد الأقصى للتذكيرات لهذه المهمة.', en: 'This task has reached its reminder limit.' },
   add: { ar: 'إضافة', en: 'Add' },
   empty: { ar: 'لا توجد مهام بعد. أضف أول مهمة.', en: 'No tasks yet. Add your first one.' },
   remaining: { ar: 'متبقية', en: 'remaining' },
@@ -15,8 +21,5 @@ export const strings = {
   full: { ar: 'وصلت إلى الحد الأقصى لعدد المهام.', en: 'You have reached the maximum number of tasks.' },
   syncLoading: { ar: 'جارٍ تحميل مهام الحساب…', en: 'Loading account tasks…' },
   syncReady: { ar: 'مزامنة الحساب مفعّلة عند الاتصال.', en: 'Account sync is enabled when online.' },
-  storage: {
-    ar: 'تُحفظ المهام في متصفحك على هذا الجهاز فقط. لا تُرسل إلى أي خادم ولا تُنسخ احتياطياً، وتُحذف عند مسح بيانات المتصفح.',
-    en: 'Tasks are saved in your browser on this device only. They are not sent to any server or backed up, and are removed if you clear browser data.',
-  },
+  storage: { ar: 'تُحفظ المهام والتذكيرات في متصفحك على هذا الجهاز فقط. سجّل الدخول لمزامنتها مع حسابك.', en: 'Tasks and reminders are saved in this browser on this device only. Sign in to sync them with your account.' },
 } satisfies Record<string, Localized<string>>
