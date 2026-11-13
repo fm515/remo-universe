@@ -41,7 +41,7 @@ jobs:
           supabase db dump --db-url "$SUPABASE_DB_URL" -f backup/data.sql --use-copy --data-only
           tar -czf "supabase-db-backup-${GITHUB_RUN_ID}.tar.gz" backup/
 
-      - name: Upload encrypted-access backup artifact
+      - name: Upload backup artifact
         uses: actions/upload-artifact@v4
         with:
           name: supabase-db-backup-${{ github.run_id }}
