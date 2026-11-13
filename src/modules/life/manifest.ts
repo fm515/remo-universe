@@ -8,8 +8,8 @@ export const manifest: ModuleManifest = {
   icon: ListChecks,
   tagline: { ar: 'تنظيم الحياة والمهام', en: 'Life and task organisation' },
   description: {
-    ar: 'أدوات شخصية لتنظيم يومك. قائمة المهام تعمل الآن وتُحفظ على جهازك.',
-    en: 'Personal tools for organising your day. The task list works now and is saved on your device.',
+    ar: 'أدوات شخصية لتنظيم يومك. قائمة المهام تعمل محلياً وتُزامن مع حسابك عند تسجيل الدخول وتوفر الاتصال.',
+    en: 'Personal tools for organising your day. Tasks work locally and sync to your account when signed in and online.',
   },
   features: [
     {
@@ -17,8 +17,8 @@ export const manifest: ModuleManifest = {
       status: 'implemented',
       title: { ar: 'قائمة المهام', en: 'Task list' },
       description: {
-        ar: 'أضف المهام وأنجزها واحذفها. تُحفظ في متصفحك على هذا الجهاز وتعمل دون اتصال.',
-        en: 'Add, complete and delete tasks. Saved in your browser on this device; works offline.',
+        ar: 'أضف المهام وأنجزها واحذفها. تعمل دون اتصال، وتُزامن مهام الحساب عند تسجيل الدخول وتوفر الإنترنت.',
+        en: 'Add, complete and delete tasks. Works offline; account tasks sync when signed in and online.',
       },
     },
     {
@@ -41,11 +41,11 @@ export const manifest: ModuleManifest = {
     },
     {
       id: 'sync',
-      status: 'planned',
-      title: { ar: 'النسخ الاحتياطي والمزامنة', en: 'Backup and sync' },
+      status: 'implemented',
+      title: { ar: 'مزامنة المهام للحساب', en: 'Account task sync' },
       description: {
-        ar: 'حفظ المهام في حسابك عند توفر حسابات REMO.',
-        en: 'Store tasks in your account once REMO accounts exist.',
+        ar: 'تُزامن مهام الحساب بين الجلسات عند توفر الإنترنت. مهام الضيف تبقى على الجهاز، واختبار المزامنة على جهازين حقيقيين ما زال مطلوباً.',
+        en: 'Account tasks sync across sessions when online. Guest tasks remain on-device; two-device end-to-end testing is still required.',
       },
     },
   ],
