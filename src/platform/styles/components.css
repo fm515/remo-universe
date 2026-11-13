@@ -675,3 +675,5 @@ code {
 .task__reminder .icon-btn { min-height: 32px; min-width: 32px; }
 .task__reminder-editor { flex-wrap: wrap; align-items: end; padding: 8px; border: 1px dashed var(--border-strong); border-radius: 10px; }
 .task__reminder-editor .tasks__due-field { flex: 1 1 190px; }
+.task__reminder-actions { display: inline-flex; align-items: center; gap: 4px; }
+.task__reminder-editor .input { flex: 1 1 190px; }
