@@ -82,7 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const requestPasswordReset = useCallback(async (email: string): Promise<AuthResult> => {
     if (!supabase) return { error: 'Account service is not configured yet.' }
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim())
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      // Supabase Auth must allowlist the production app origin.
+      redirectTo: window.location.origin,
+    })
     return { error: error?.message ?? null }
   }, [])
 
