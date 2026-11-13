@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_REMINDERS_PER_TASK, MAX_TASKS, MAX_TITLE_LENGTH, addReminder, addTask, clearCompleted, parseTasks, removeReminder, removeTask, toggleTask, type Task } from './tasks'
+import { MAX_REMINDERS_PER_TASK, MAX_TASKS, MAX_TITLE_LENGTH, addReminder, addTask, clearCompleted, parseTasks, removeReminder, removeTask, toggleTask, updateReminder, type Task } from './tasks'
 
 const task = (id: string, done = false): Task => ({ id, title: 'Task ' + id, done, createdAt: 1, dueAt: null, reminders: [] })
 const reminder = (id: string, remindAt = '2026-12-01T09:30:00.000Z') => ({ id, remindAt, timezone: 'Europe/Istanbul' })
