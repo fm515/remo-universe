@@ -31,6 +31,11 @@ describe('tasks', () => {
     expect(addReminder([full], 'a', reminder('extra'))[0].reminders).toHaveLength(MAX_REMINDERS_PER_TASK)
     expect(removeReminder([full], 'a', '0')[0].reminders).toHaveLength(MAX_REMINDERS_PER_TASK - 1)
   })
+  it('updates a reminder date and time without changing its id', () => {
+    const original = reminder('r1')
+    const updated = updateReminder([{ ...task('a'), reminders: [original] }], 'a', 'r1', '2026-12-05T12:45:00.000Z', 'Europe/Istanbul')
+    expect(updated[0].reminders).toEqual([{ ...original, remindAt: '2026-12-05T12:45:00.000Z' }])
+  })
   it('toggles, removes and clears completed without mutating', () => {
     const list = [task('a'), task('b', true)]
     expect(toggleTask(list, 'a')[0].done).toBe(true)
