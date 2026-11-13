@@ -1,8 +1,16 @@
-/** Pure task logic — no React, no storage. Unit-tested in tasks.test.ts. */
+/** Pure task and reminder logic — no React, no storage. Unit-tested in tasks.test.ts. */
 
 export const TASKS_KEY = 'remo.life.tasks.v1'
 export const MAX_TITLE_LENGTH = 200
 export const MAX_TASKS = 500
+export const MAX_REMINDERS_PER_TASK = 20
+
+export interface TaskReminder {
+  id: string
+  /** Absolute instant in ISO-8601 form; the timezone field preserves the user's wall-clock context. */
+  remindAt: string
+  timezone: string
+}
 
 export interface Task {
   id: string
@@ -12,14 +20,34 @@ export interface Task {
   createdAt: number
   /** Calendar date in YYYY-MM-DD form, or null when no due date is set. */
   dueAt: string | null
+  reminders: TaskReminder[]
 }
 
 export function normalizeTitle(input: string): string {
-  return input.replace(/\s+/g, ' ').trim().slice(0, MAX_TITLE_LENGTH)
+  return input.replace(/\\s+/g, ' ').trim().slice(0, MAX_TITLE_LENGTH)
 }
 
 function normalizeDueDate(value: unknown): string | null {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null
+  return typeof value === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(value) ? value : null
+}
+
+function parseReminders(value: unknown): TaskReminder[] {
+  if (!Array.isArray(value)) return []
+  const seen = new Set<string>()
+  const result: TaskReminder[] = []
+  for (const item of value) {
+    if (typeof item !== 'object' || item === null) continue
+    const candidate = item as Record<string, unknown>
+    if (typeof candidate.id !== 'string' || !candidate.id || seen.has(candidate.id)) continue
+    if (typeof candidate.remindAt !== 'string' || !Number.isFinite(Date.parse(candidate.remindAt))) continue
+    const timezone = typeof candidate.timezone === 'string' && candidate.timezone.length <= 80
+      ? candidate.timezone
+      : 'UTC'
+    seen.add(candidate.id)
+    result.push({ id: candidate.id, remindAt: new Date(candidate.remindAt).toISOString(), timezone })
+    if (result.length >= MAX_REMINDERS_PER_TASK) break
+  }
+  return result.sort((a, b) => Date.parse(a.remindAt) - Date.parse(b.remindAt))
 }
 
 /** Accepts anything read from storage; drops whatever is not a valid task. Never throws. */
@@ -29,7 +57,7 @@ export function parseTasks(raw: unknown): Task[] {
   const tasks: Task[] = []
   for (const item of raw) {
     if (typeof item !== 'object' || item === null) continue
-    const { id, title, done, createdAt, dueAt } = item as Record<string, unknown>
+    const { id, title, done, createdAt, dueAt, reminders } = item as Record<string, unknown>
     if (typeof id !== 'string' || id === '' || seen.has(id)) continue
     if (typeof title !== 'string') continue
     const cleanTitle = normalizeTitle(title)
@@ -41,6 +69,7 @@ export function parseTasks(raw: unknown): Task[] {
       done: done === true,
       createdAt: typeof createdAt === 'number' && Number.isFinite(createdAt) ? createdAt : 0,
       dueAt: normalizeDueDate(dueAt),
+      reminders: parseReminders(reminders),
     })
     if (tasks.length >= MAX_TASKS) break
   }
@@ -51,7 +80,21 @@ export function parseTasks(raw: unknown): Task[] {
 export function addTask(tasks: Task[], title: string, id: string, now: number, dueAt: string | null = null): Task[] {
   const cleanTitle = normalizeTitle(title)
   if (cleanTitle === '' || tasks.length >= MAX_TASKS) return tasks
-  return [{ id, title: cleanTitle, done: false, createdAt: now, dueAt: normalizeDueDate(dueAt) }, ...tasks]
+  return [{ id, title: cleanTitle, done: false, createdAt: now, dueAt: normalizeDueDate(dueAt), reminders: [] }, ...tasks]
+}
+
+export function addReminder(tasks: Task[], taskId: string, reminder: TaskReminder): Task[] {
+  return tasks.map((task) => {
+    if (task.id !== taskId || task.reminders.length >= MAX_REMINDERS_PER_TASK) return task
+    if (task.reminders.some((item) => item.remindAt === reminder.remindAt)) return task
+    return { ...task, reminders: [...task.reminders, reminder].sort((a, b) => Date.parse(a.remindAt) - Date.parse(b.remindAt)) }
+  })
+}
+
+export function removeReminder(tasks: Task[], taskId: string, reminderId: string): Task[] {
+  return tasks.map((task) => task.id === taskId
+    ? { ...task, reminders: task.reminders.filter((reminder) => reminder.id !== reminderId) }
+    : task)
 }
 
 export function toggleTask(tasks: Task[], id: string): Task[] {
