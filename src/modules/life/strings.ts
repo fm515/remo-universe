@@ -11,6 +11,8 @@ export const strings = {
   saveReminder: { ar: 'حفظ التذكير', en: 'Save reminder' },
   reminderDateTime: { ar: 'تاريخ ووقت التذكير', en: 'Reminder date and time' },
   removeReminder: { ar: 'حذف التذكير', en: 'Delete reminder' },
+  editReminder: { ar: 'تعديل التذكير', en: 'Edit reminder' },
+  cancel: { ar: 'إلغاء', en: 'Cancel' },
   reminderLimit: { ar: 'وصلت إلى الحد الأقصى للتذكيرات لهذه المهمة.', en: 'This task has reached its reminder limit.' },
   add: { ar: 'إضافة', en: 'Add' },
   empty: { ar: 'لا توجد مهام بعد. أضف أول مهمة.', en: 'No tasks yet. Add your first one.' },
