@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { LANGUAGE_META, type Direction, type Language, type Localized } from '../i18n'
 import { usePersistentState } from '../storage'
+import { supabase } from '../backend'
+import { useAuth } from '../auth'
 import {
   PREFERENCES_KEY,
   THEME_COLOR,
@@ -37,39 +39,4 @@ function useSystemPrefersLight(): boolean {
 }
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const [preferences, update] = usePersistentState(PREFERENCES_KEY, parseStored)
-  const systemPrefersLight = useSystemPrefersLight()
-  const resolvedTheme = resolveTheme(preferences.theme, systemPrefersLight)
-  const direction = LANGUAGE_META[preferences.language].dir
-
-  // The document element is the single source of truth for CSS (dir + data-theme).
-  useEffect(() => {
-    const root = document.documentElement
-    root.lang = preferences.language
-    root.dir = direction
-    root.dataset.theme = resolvedTheme
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[resolvedTheme])
-  }, [preferences.language, direction, resolvedTheme])
-
-  const setLanguage = useCallback((language: Language) => update((p) => ({ ...p, language })), [update])
-  const setTheme = useCallback((theme: ThemeChoice) => update((p) => ({ ...p, theme })), [update])
-  const reset = useCallback(() => update(() => parsePreferences(undefined, browserLanguages())), [update])
-
-  const value = useMemo(
-    () => ({ ...preferences, direction, resolvedTheme, setLanguage, setTheme, reset }),
-    [preferences, direction, resolvedTheme, setLanguage, setTheme, reset],
-  )
-  return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>
-}
-
-export function usePreferences(): PreferencesContextValue {
-  const value = useContext(PreferencesContext)
-  if (!value) throw new Error('usePreferences must be used inside <PreferencesProvider>')
-  return value
-}
-
-/** Returns a function that picks the current-language variant of a Localized value. */
-export function useLocalize(): <T>(value: Localized<T>) => T {
-  const { language } = usePreferences()
-  return useCallback(<T,>(value: Localized<T>) => value[language], [language])
-}
+  cons¶»§q«^

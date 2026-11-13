@@ -1,5 +1,5 @@
 import { HashRouter, Link, Route, Routes } from 'react-router-dom'
-import { ModuleRegistryProvider, PreferencesProvider, ROUTES, useLocalize } from '@/platform'
+import { AuthProvider, ModuleRegistryProvider, PreferencesProvider, ROUTES, useLocalize } from '@/platform'
 import { AppShell } from './AppShell'
 import { modules } from './registry'
 import { strings } from './strings'
@@ -27,7 +27,8 @@ const routes = modules.flatMap((module) => [
 
 export default function App() {
   return (
-    <PreferencesProvider>
+    <AuthProvider>
+      <PreferencesProvider>
       <ModuleRegistryProvider modules={modules}>
         {/* Hash routing: deep links work on any static host with no server rewrite rules. */}
         <HashRouter>
@@ -41,6 +42,5 @@ export default function App() {
           </AppShell>
         </HashRouter>
       </ModuleRegistryProvider>
-    </PreferencesProvider>
-  )
-}
+      </PreferencesProvider>
+    </AuthProv¶»§q«^
