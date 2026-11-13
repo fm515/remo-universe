@@ -1,0 +1,59 @@
+/*
+ * REMO design tokens — black · electric yellow · white.
+ * Components use ONLY these variables; never raw colours.
+ * Yellow is a fill/accent. It is never used as text on a light background (fails contrast),
+ * which is why --accent-text differs per theme.
+ */
+:root {
+  --yellow: #ffe600;
+  --black: #0a0a0a;
+  --white: #ffffff;
+
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Arabic', 'Noto Naskh Arabic',
+    'Geeza Pro', Tahoma, Arial, sans-serif;
+
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --tap: 44px; /* minimum touch target */
+  --sidebar: 268px;
+  --topbar: 56px;
+  --bottomnav: 60px;
+
+  --accent: var(--yellow);
+  --on-accent: var(--black);
+  color-scheme: dark;
+}
+
+:root,
+:root[data-theme='dark'] {
+  --bg: #0a0a0a;
+  --surface: #131313;
+  --surface-2: #1b1b1b;
+  --border: #2a2a2a;
+  --border-strong: #4a4a4a;
+  --text: #ffffff;
+  --text-muted: #a8a8a8;
+  --accent-text: var(--yellow);
+  --accent-soft: rgba(255, 230, 0, 0.1);
+  --accent-border: rgba(255, 230, 0, 0.45);
+  --glow: rgba(255, 230, 0, 0.12);
+  --danger: #ff6b6b;
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --bg: #ffffff;
+  --surface: #f6f6f4;
+  --surface-2: #ecece8;
+  --border: #dcdcd6;
+  --border-strong: #8a8a84;
+  --text: #0a0a0a;
+  --text-muted: #55554f;
+  --accent-text: #0a0a0a;
+  --accent-soft: rgba(255, 230, 0, 0.28);
+  --accent-border: #0a0a0a;
+  --glow: rgba(255, 230, 0, 0.45);
+  --danger: #b3261e;
+  color-scheme: light;
+}

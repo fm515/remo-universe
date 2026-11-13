@@ -1,5 +1,45 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
-  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="theme-color" content="#111111" /><title>REMO UNIVERSE</title></head>
-  <body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body>
+<html lang="ar" dir="rtl" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="REMO UNIVERSE — modular digital platform (foundation build)." />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <title>REMO UNIVERSE</title>
+    <script>
+      /* Applies saved language/theme before first paint (no flash).
+         Mirrors src/platform/preferences/preferences.ts — keep the two in sync. */
+      ;(function () {
+        try {
+          var d = document.documentElement
+          var p = JSON.parse(localStorage.getItem('remo.preferences.v1') || '{}') || {}
+          var lang = p.language
+          if (lang !== 'ar' && lang !== 'en') {
+            lang = 'ar'
+            var list = navigator.languages || [navigator.language || '']
+            for (var i = 0; i < list.length; i++) {
+              var c = String(list[i]).toLowerCase().slice(0, 2)
+              if (c === 'ar' || c === 'en') { lang = c; break }
+            }
+          }
+          var theme = p.theme
+          if (theme !== 'dark' && theme !== 'light') {
+            theme = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+          }
+          d.lang = lang
+          d.dir = lang === 'ar' ? 'rtl' : 'ltr'
+          d.setAttribute('data-theme', theme)
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>REMO UNIVERSE requires JavaScript. / يتطلب REMO UNIVERSE تفعيل JavaScript.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

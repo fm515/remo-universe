@@ -1,1 +1,9 @@
-node_modules\ndist\n.env\n*.local\n
+node_modules
+dist
+coverage
+.env
+.env.*
+!.env.example
+*.local
+*.tsbuildinfo
+.DS_Store
