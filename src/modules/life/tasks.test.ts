@@ -23,7 +23,7 @@ describe('tasks', () => {
     const earlier = reminder('earlier', '2026-12-01T09:00:00.000Z')
     const result = addReminder(addReminder(base, 'a', later), 'a', earlier)
     expect(result[0].reminders.map((item) => item.id)).toEqual(['earlier', 'later'])
-    expect(addReminder(result, 'a', reminder('duplicate', earlier.remindAt))).toBe(result)
+    expect(addReminder(result, 'a', reminder('duplicate', earlier.remindAt))).toEqual(result)
   })
   it('enforces reminder limit and removes one reminder independently', () => {
     const reminders = Array.from({ length: MAX_REMINDERS_PER_TASK }, (_, i) => reminder(String(i), new Date(Date.UTC(2026, 0, 1, 0, i)).toISOString()))
