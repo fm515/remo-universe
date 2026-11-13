@@ -101,7 +101,7 @@ export default function LifePage() {
       const remote = (taskResult.data ?? []).map((row) => ({
         id: row.id, title: row.title, done: Boolean(row.completed_at),
         createdAt: row.created_at ? new Date(row.created_at).getTime() : 0,
-        dueAt: row.due_at ? new Date(row.due_at).toISOString().slice(0, 10) : null,
+        dueAt: row.due_at ? new Date(row.due_at).toISOString() : null,
         reminders: remindersByTask.get(row.id) ?? [],
       }))
       let stored: unknown
@@ -141,7 +141,7 @@ export default function LifePage() {
           const rows = tasks.map((task) => ({ id: task.id, user_id: user.id, title: task.title,
             completed_at: task.done ? new Date(task.createdAt || Date.now()).toISOString() : null,
             created_at: new Date(task.createdAt || Date.now()).toISOString(), updated_at: new Date().toISOString(),
-            due_at: task.dueAt ? new Date(task.dueAt + 'T12:00:00.000Z').toISOString() : null }))
+            due_at: task.dueAt ? new Date(task.dueAt).toISOString() : null }))
           const { error } = await client.from('life_tasks').upsert(rows, { onConflict: 'id' })
           if (error) { setSyncNotice(error.message); return }
         }
@@ -170,7 +170,7 @@ export default function LifePage() {
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
     if (!canAdd) return
-    updateTasks((previous) => addTask(previous, draft, createId(), Date.now(), dueDraft || null))
+    updateTasks((previous) => addTask(previous, draft, createId(), Date.now(), dueDraft ? new Date(dueDraft).toISOString() : null))
     setDraft(''); setDueDraft('')
   }
   const toLocalInputValue = (iso: string) => {
@@ -214,7 +214,7 @@ export default function LifePage() {
         <form className='tasks__form' onSubmit={onSubmit}>
           <label className='visually-hidden' htmlFor='task-input'>{localize(strings.inputLabel)}</label>
           <input id='task-input' className='input tasks__title-input' dir='auto' value={draft} maxLength={MAX_TITLE_LENGTH} placeholder={localize(strings.placeholder)} autoComplete='off' enterKeyHint='done' onChange={(event) => setDraft(event.target.value)} />
-          <label className='tasks__due-field'><span>{localize(strings.dueDate)}</span><input className='input' type='date' value={dueDraft} onChange={(event) => setDueDraft(event.target.value)} /></label>
+          <label className='tasks__due-field'><span>{localize(strings.dueDate)}</span><input className='input' type='datetime-local' value={dueDraft} onChange={(event) => setDueDraft(event.target.value)} /></label>
           <button type='submit' className='btn btn--primary' disabled={!canAdd}><Plus size={18} aria-hidden />{localize(strings.add)}</button>
         </form>
         {full && <p className='muted'>{localize(strings.full)}</p>}
@@ -225,7 +225,7 @@ export default function LifePage() {
                 <div className='task__main'>
                   <label className='task__label'>
                     <input type='checkbox' checked={task.done} onChange={() => updateTasks((previous) => toggleTask(previous, task.id))} />
-                    <span className='task__content'><span dir='auto'>{task.title}</span>{task.dueAt ? <small className='task__due'>{localize(strings.due)}: {new Date(task.dueAt + 'T12:00:00').toLocaleDateString()}</small> : null}</span>
+                    <span className='task__content'><span dir='auto'>{task.title}</span>{task.dueAt ? <small className='task__due'>{localize(strings.due)}: {new Date(task.dueAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</small> : null}</span>
                   </label>
                   <button type='button' className='icon-btn' aria-label={localize(strings.delete) + ': ' + task.title} onClick={() => updateTasks((previous) => removeTask(previous, task.id))}><Trash2 size={18} aria-hidden /></button>
                 </div>

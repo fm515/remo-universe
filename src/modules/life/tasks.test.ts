@@ -7,8 +7,14 @@ const reminder = (id: string, remindAt = '2026-12-01T09:30:00.000Z') => ({ id, r
 describe('tasks', () => {
   it('adds new tasks with no reminders by default', () => {
     const result = addTask([task('a')], '  buy   bread \n', 'b', 5, '2026-12-01')
-    expect(result[0]).toMatchObject({ id: 'b', title: 'buy bread', dueAt: '2026-12-01', reminders: [] })
+    expect(result[0]).toMatchObject({ id: 'b', title: 'buy bread', dueAt: '2026-12-01T12:00:00.000Z', reminders: [] })
     expect(addTask([], 'call home', 'c', 6)[0].dueAt).toBeNull()
+  })
+  it('preserves full due date-time and upgrades legacy date-only values', () => {
+    const full = parseTasks([{ id: 'timed', title: 'Timed task', dueAt: '2026-12-01T09:45:00.000Z' }])
+    expect(full[0].dueAt).toBe('2026-12-01T09:45:00.000Z')
+    const legacy = parseTasks([{ id: 'legacy', title: 'Legacy task', dueAt: '2026-12-01' }])
+    expect(legacy[0].dueAt).toBe('2026-12-01T12:00:00.000Z')
   })
   it('respects title and task limits', () => {
     const list = [task('a')]

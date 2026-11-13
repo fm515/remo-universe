@@ -9,7 +9,12 @@ export interface TaskReminder { id: string; remindAt: string; timezone: string }
 export interface Task { id: string; title: string; done: boolean; createdAt: number; dueAt: string | null; reminders: TaskReminder[] }
 
 export function normalizeTitle(input: string): string { return input.replace(/\s+/g, ' ').trim().slice(0, MAX_TITLE_LENGTH) }
-function normalizeDueDate(value: unknown): string | null { return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null }
+function normalizeDueDate(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value + 'T12:00:00.000Z' // legacy date-only value
+  if (!Number.isFinite(Date.parse(value))) return null
+  return new Date(value).toISOString()
+}
 
 function parseReminders(value: unknown): TaskReminder[] {
   if (!Array.isArray(value)) return []
