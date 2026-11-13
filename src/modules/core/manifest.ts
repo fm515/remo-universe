@@ -8,8 +8,8 @@ export const manifest: ModuleManifest = {
   icon: LayoutDashboard,
   tagline: { ar: 'المركز الرئيسي للمنظومة', en: 'The platform hub' },
   description: {
-    ar: 'لوحة التحكم، التنقل بين الوحدات، وإعدادات الواجهة.',
-    en: 'The dashboard, navigation between modules, and interface settings.',
+    ar: 'لوحة التحكم، التنقل بين الوحدات، الحسابات وإعدادات الواجهة.',
+    en: 'The dashboard, module navigation, accounts and interface settings.',
   },
   features: [
     {
@@ -42,10 +42,10 @@ export const manifest: ModuleManifest = {
     {
       id: 'preferences',
       status: 'implemented',
-      title: { ar: 'حفظ التفضيلات', en: 'Saved preferences' },
+      title: { ar: 'حفظ ومزامنة التفضيلات', en: 'Saved and synced preferences' },
       description: {
-        ar: 'تُحفظ اللغة والسمة على هذا الجهاز وتُستعاد عند الفتح التالي.',
-        en: 'Language and theme are saved on this device and restored on the next visit.',
+        ar: 'تُحفظ اللغة والسمة محلياً، وتُزامنان مع حسابك عند تسجيل الدخول وتوفر الاتصال.',
+        en: 'Language and theme are saved locally and synced to your account when signed in and online.',
       },
     },
     {
@@ -59,11 +59,11 @@ export const manifest: ModuleManifest = {
     },
     {
       id: 'accounts',
-      status: 'planned',
+      status: 'implemented',
       title: { ar: 'الحسابات وتسجيل الدخول', en: 'Accounts and sign-in' },
       description: {
-        ar: 'حساب مستخدم حقيقي عبر خدمة مصادقة. لا يوجد تسجيل دخول في هذه النسخة.',
-        en: 'Real user accounts through an authentication service. There is no sign-in in this build.',
+        ar: 'إنشاء حساب بالبريد وكلمة المرور، وتسجيل الدخول والخروج واستعادة الجلسة. تعديل الملف الشخصي واستعادة كلمة المرور ما زالا قيد التطوير.',
+        en: 'Email/password sign-up, sign-in, sign-out and session restore. Profile editing and password recovery are still in development.',
       },
     },
     {
