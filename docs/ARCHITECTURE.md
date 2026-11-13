@@ -1,7 +1,8 @@
 # Architecture
 
 REMO UNIVERSE is a **modular monolith**: one deployable front-end application, internally divided into
-modules with enforced boundaries. There are no microservices and, in this build, no backend at all.
+modules with enforced boundaries. There are no microservices. The current foundation uses a dedicated Supabase
+backend for authentication and account-scoped preferences and task sync.
 
 ## Layout
 
@@ -18,6 +19,8 @@ src/
 │   ├── preferences/         language + theme state, persistence, document sync
 │   ├── storage/             safe localStorage wrapper, usePersistentState
 │   ├── modules/             module contract (types), registry context, status derivation
+│   ├── auth/                Supabase email/password authentication and session state
+│   ├── backend/             browser-safe Supabase client (publishable key only)
 │   ├── pwa/                 install prompt, offline/update state, online status
 │   ├── ui/                  shared components (ModulePage, StatusBadge, Notice, Segmented)
 │   └── styles/              design tokens, base, components
@@ -112,7 +115,9 @@ Black · electric yellow `#FFE600` · white, defined once in `platform/styles/to
 - Keys are versioned for future migrations. Changes sync between open tabs.
 - A small inline script in `index.html` applies language and theme before first paint. It mirrors
   `preferences.ts`; change both together.
-- Nothing leaves the device. There are no analytics, cookies, or network calls other than loading the app.
+- Guest tasks and local preferences remain on-device. For signed-in users, preferences and LIFE tasks are synced to the dedicated Supabase project when online.
+- Row-level security restricts account data to its authenticated owner. The browser uses only the public publishable key; secret/service-role keys must never be shipped to the client.
+- There are no analytics or advertising trackers in the foundation.
 
 ## PWA
 
