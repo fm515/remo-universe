@@ -43,9 +43,16 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   const preferencesKey = user ? `${PREFERENCES_KEY}.user.${user.id}` : PREFERENCES_KEY
   const [preferences, update] = usePersistentState(preferencesKey, parseStored)
   const [cloudUserId, setCloudUserId] = useState<string | null>(null)
+  const [syncAttempt, setSyncAttempt] = useState(0)
   const systemPrefersLight = useSystemPrefersLight()
   const resolvedTheme = resolveTheme(preferences.theme, systemPrefersLight)
   const direction = LANGUAGE_META[preferences.language].dir
+
+  useEffect(() => {
+    const retry = () => setSyncAttempt((value) => value + 1)
+    window.addEventListener('online', retry)
+    return () => window.removeEventListener('online', retry)
+  }, [])
 
   useEffect(() => {
     if (!user || !supabase) {
@@ -77,7 +84,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     return () => { active = false }
     // Load once per account; local preference changes are handled by the sync effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, supabase])
+  }, [user?.id, syncAttempt])
 
   useEffect(() => {
     if (!user || !supabase || cloudUserId !== user.id) return
@@ -87,7 +94,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       theme: preferences.theme,
       updated_at: new Date().toISOString(),
     })
-  }, [user?.id, cloudUserId, preferences.language, preferences.theme])
+  }, [user?.id, cloudUserId, preferences.language, preferences.theme, syncAttempt])
 
   useEffect(() => {
     const root = document.documentElement
