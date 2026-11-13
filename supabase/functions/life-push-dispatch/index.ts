@@ -31,7 +31,8 @@ Deno.serve(async (req: Request) => {
     if (vapidError || !vapid?.publicKey || !vapid?.privateKey) {
       throw new Error("Push signing keys are not configured");
     }
-    webpush.setVapidDetails("https://remo-universe.vercel.app/", vapid.publicKey, vapid.privateKey);
+    const publicKeyBytes = new Uint8Array([4, ...base64UrlToBytes(vapid.publicKey.x), ...base64UrlToBytes(vapid.publicKey.y)]);
+    webpush.setVapidDetails("https://remo-universe.vercel.app/", bytesToBase64Url(publicKeyBytes), vapid.privateKey.d);
 
     const now = new Date().toISOString();
     const { data: due, error: dueError } = await admin
@@ -111,4 +112,15 @@ function json(body: unknown, status: number) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
+}
+
+function base64UrlToBytes(value: string): number[] {
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  return Array.from(atob(base64), (character) => character.charCodeAt(0));
+}
+
+function bytesToBase64Url(value: Uint8Array): string {
+  let binary = "";
+  for (const byte of value) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
