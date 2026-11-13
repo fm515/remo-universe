@@ -1,0 +1,1 @@
+# REMO TRADE\n\nModule boundary reserved for future implementation. No live functionality is claimed in this foundation release.\n
