@@ -1,9 +1,9 @@
-import { Plus, Trash2, X } from 'lucide-react'
+import { Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { ModulePage, Notice, supabase, useAuth, useLocalize, usePersistentState } from '@/platform'
 import { manifest } from './manifest'
 import { strings } from './strings'
-import { MAX_REMINDERS_PER_TASK, MAX_TASKS, MAX_TITLE_LENGTH, TASKS_KEY, addReminder, addTask, clearCompleted, createId, normalizeTitle, parseTasks, removeReminder, removeTask, toggleTask } from './tasks'
+import { MAX_REMINDERS_PER_TASK, MAX_TASKS, MAX_TITLE_LENGTH, TASKS_KEY, addReminder, addTask, clearCompleted, createId, normalizeTitle, parseTasks, removeReminder, removeTask, toggleTask, updateReminder } from './tasks'
 
 export default function LifePage() {
   const localize = useLocalize()
@@ -14,6 +14,8 @@ export default function LifePage() {
   const [dueDraft, setDueDraft] = useState('')
   const [reminderTaskId, setReminderTaskId] = useState<string | null>(null)
   const [reminderDraft, setReminderDraft] = useState('')
+  const [editingReminderId, setEditingReminderId] = useState<string | null>(null)
+  const [editingReminderDraft, setEditingReminderDraft] = useState('')
   const [cloudReady, setCloudReady] = useState(false)
   const [syncNotice, setSyncNotice] = useState('')
   const [syncAttempt, setSyncAttempt] = useState(0)
@@ -117,6 +119,18 @@ export default function LifePage() {
     updateTasks((previous) => addTask(previous, draft, createId(), Date.now(), dueDraft || null))
     setDraft(''); setDueDraft('')
   }
+  const toLocalInputValue = (iso: string) => {
+    const date = new Date(iso)
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+  }
+  const saveReminderEdit = (taskId: string, reminderId: string) => {
+    if (!editingReminderDraft) return
+    const date = new Date(editingReminderDraft)
+    if (!Number.isFinite(date.getTime())) return
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+    updateTasks((previous) => updateReminder(previous, taskId, reminderId, date.toISOString(), timezone))
+    setEditingReminderId(null); setEditingReminderDraft('')
+  }
   const saveReminder = (taskId: string) => {
     if (!reminderDraft) return
     const date = new Date(reminderDraft)
@@ -159,8 +173,21 @@ export default function LifePage() {
                   </div>
                   {task.reminders.map((item) => (
                     <div className='task__reminder' key={item.id}>
-                      <span>{new Date(item.remindAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
-                      <button type='button' className='icon-btn' aria-label={localize(strings.removeReminder)} onClick={() => updateTasks((previous) => removeReminder(previous, task.id, item.id))}><X size={16} aria-hidden /></button>
+                      {editingReminderId === item.id ? (
+                        <div className='task__reminder-editor'>
+                          <input className='input' type='datetime-local' value={editingReminderDraft} onChange={(event) => setEditingReminderDraft(event.target.value)} />
+                          <button type='button' className='btn btn--primary' disabled={!editingReminderDraft} onClick={() => saveReminderEdit(task.id, item.id)}>{localize(strings.saveReminder)}</button>
+                          <button type='button' className='icon-btn' aria-label={localize(strings.cancel)} onClick={() => { setEditingReminderId(null); setEditingReminderDraft('') }}><X size={16} aria-hidden /></button>
+                        </div>
+                      ) : (
+                        <>
+                          <span>{new Date(item.remindAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                          <div className='task__reminder-actions'>
+                            <button type='button' className='icon-btn' aria-label={localize(strings.editReminder)} onClick={() => { setEditingReminderId(item.id); setEditingReminderDraft(toLocalInputValue(item.remindAt)) }}><Pencil size={16} aria-hidden /></button>
+                            <button type='button' className='icon-btn' aria-label={localize(strings.removeReminder)} onClick={() => updateTasks((previous) => removeReminder(previous, task.id, item.id))}><X size={16} aria-hidden /></button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
                   {reminderTaskId === task.id && (
