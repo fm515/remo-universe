@@ -22,6 +22,7 @@ export default function LifePage() {
   const storageKey = user ? `remo.life.tasks.v1.user.${user.id}` : TASKS_KEY
   const [tasks, updateTasks] = usePersistentState(storageKey, parseTasks)
   const [draft, setDraft] = useState('')
+  const [dueDraft, setDueDraft] = useState('')
   const [cloudReady, setCloudReady] = useState(false)
   const [syncNotice, setSyncNotice] = useState('')
   const [syncAttempt, setSyncAttempt] = useState(0)
@@ -44,7 +45,7 @@ export default function LifePage() {
     void (async () => {
       const { data, error } = await client
         .from('life_tasks')
-        .select('id, title, completed_at, created_at, updated_at')
+        .select('id, title, completed_at, created_at, updated_at, due_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
       if (!active) return
@@ -57,6 +58,7 @@ export default function LifePage() {
         title: row.title,
         done: Boolean(row.completed_at),
         createdAt: row.created_at ? new Date(row.created_at).getTime() : 0,
+        dueAt: row.due_at ? new Date(row.due_at).toISOString().slice(0, 10) : null,
       }))
       let stored: unknown
       try { stored = JSON.parse(window.localStorage.getItem(storageKey) ?? '[]') } catch { stored = [] }
@@ -97,6 +99,7 @@ export default function LifePage() {
             completed_at: task.done ? new Date(task.createdAt || Date.now()).toISOString() : null,
             created_at: new Date(task.createdAt || Date.now()).toISOString(),
             updated_at: new Date().toISOString(),
+            due_at: task.dueAt ? new Date(`${task.dueAt}T12:00:00.000Z`).toISOString() : null,
           }))
           const { error } = await client.from('life_tasks').upsert(rows, { onConflict: 'id' })
           if (error) { setSyncNotice(error.message); return }
@@ -107,7 +110,6 @@ export default function LifePage() {
     return () => { active = false; window.clearTimeout(timer) }
   }, [user?.id, cloudReady, tasks, syncAttempt])
 
-
   const doneCount = tasks.filter((task) => task.done).length
   const full = tasks.length >= MAX_TASKS
   const canAdd = normalizeTitle(draft) !== '' && !full
@@ -115,8 +117,9 @@ export default function LifePage() {
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
     if (!canAdd) return
-    updateTasks((previous) => addTask(previous, draft, createId(), Date.now()))
+    updateTasks((previous) => addTask(previous, draft, createId(), Date.now(), dueDraft || null))
     setDraft('')
+    setDueDraft('')
   }
 
   return (
@@ -138,7 +141,7 @@ export default function LifePage() {
           </label>
           <input
             id="task-input"
-            className="input"
+            className="input tasks__title-input"
             dir="auto"
             value={draft}
             maxLength={MAX_TITLE_LENGTH}
@@ -147,6 +150,15 @@ export default function LifePage() {
             enterKeyHint="done"
             onChange={(event) => setDraft(event.target.value)}
           />
+          <label className="tasks__due-field">
+            <span>{localize(strings.dueDate)}</span>
+            <input
+              className="input"
+              type="date"
+              value={dueDraft}
+              onChange={(event) => setDueDraft(event.target.value)}
+            />
+          </label>
           <button type="submit" className="btn btn--primary" disabled={!canAdd}>
             <Plus size={18} aria-hidden />
             {localize(strings.add)}
@@ -166,7 +178,12 @@ export default function LifePage() {
                     checked={task.done}
                     onChange={() => updateTasks((previous) => toggleTask(previous, task.id))}
                   />
-                  <span dir="auto">{task.title}</span>
+                  <span className="task__content">
+                    <span dir="auto">{task.title}</span>
+                    {task.dueAt ? (
+                      <small className="task__due">{localize(strings.due)}: {new Date(`${task.dueAt}T12:00:00`).toLocaleDateString()}</small>
+                    ) : null}
+                  </span>
                 </label>
                 <button
                   type="button"
