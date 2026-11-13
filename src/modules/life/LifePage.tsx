@@ -1,4 +1,4 @@
-import { Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Bell, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { ModulePage, Notice, supabase, useAuth, useLocalize, usePersistentState } from '@/platform'
 import { manifest } from './manifest'
@@ -19,6 +19,60 @@ export default function LifePage() {
   const [cloudReady, setCloudReady] = useState(false)
   const [syncNotice, setSyncNotice] = useState('')
   const [syncAttempt, setSyncAttempt] = useState(0)
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [pushBusy, setPushBusy] = useState(false)
+  const [pushNotice, setPushNotice] = useState('')
+
+  useEffect(() => {
+    let active = true
+    if (!user || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setPushEnabled(false)
+      return
+    }
+    void navigator.serviceWorker.getRegistration('/push/').then(async (registration) => {
+      const subscription = await registration?.pushManager.getSubscription()
+      if (active) setPushEnabled(Boolean(subscription))
+    }).catch(() => { if (active) setPushEnabled(false) })
+    return () => { active = false }
+  }, [user?.id])
+
+  const enablePushNotifications = async () => {
+    if (!user || !supabase || pushBusy) return
+    setPushBusy(true)
+    setPushNotice('')
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+        throw new Error(localize({ ar: 'هذا المتصفح لا يدعم إشعارات الويب. جرّب Chrome على Android.', en: 'This browser does not support Web Push. Try Chrome on Android.' }))
+      }
+      const permission = await Notification.requestPermission()
+      if (permission !== 'granted') {
+        throw new Error(localize({ ar: 'لم يتم منح إذن الإشعارات. يمكنك تفعيله من إعدادات المتصفح.', en: 'Notification permission was not granted. You can enable it in browser settings.' }))
+      }
+      const registration = await navigator.serviceWorker.register('/push-sw.js', { scope: '/push/' })
+      const publicKey = 'BGtArem73gACtTa6M5P0f8czHX4YFH0PWrBVCXfMbRdOByUCEz4oY7asUNkVYYLZyZGTm57DkijoCP6ZtKD_mhM'
+      const applicationServerKey = Uint8Array.from(atob(publicKey.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(publicKey.length / 4) * 4, '=')), (char) => char.charCodeAt(0))
+      const subscription = await registration.pushManager.getSubscription() ?? await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey,
+      })
+      const keys = subscription.toJSON().keys
+      if (!keys?.p256dh || !keys.auth) throw new Error('The browser returned an incomplete push subscription.')
+      const { error } = await supabase.from('life_push_subscriptions').upsert({
+        user_id: user.id,
+        endpoint: subscription.endpoint,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'endpoint' })
+      if (error) throw error
+      setPushEnabled(true)
+      setPushNotice(localize({ ar: 'تم تفعيل الإشعارات لهذا الجهاز. ستصل التذكيرات في مواعيدها عند اتصال الجهاز بالإنترنت.', en: 'Notifications are enabled on this device. Reminders can arrive at their scheduled times while the device is online.' }))
+    } catch (error) {
+      setPushNotice(error instanceof Error ? error.message : localize({ ar: 'تعذر تفعيل الإشعارات.', en: 'Could not enable notifications.' }))
+    } finally {
+      setPushBusy(false)
+    }
+  }
 
   useEffect(() => {
     const retry = () => setSyncAttempt((value) => value + 1)
@@ -144,6 +198,15 @@ export default function LifePage() {
     <ModulePage manifest={manifest}>
       <section className='card tasks' aria-labelledby='tasks-heading'>
         {user ? <p className='muted' role='status'>{cloudReady ? (syncNotice || localize(strings.syncReady)) : (syncNotice || localize(strings.syncLoading))}</p> : null}
+        {user ? (
+          <div className='task__reminders-head'>
+            <span className='muted'>{pushEnabled ? localize({ ar: 'الإشعارات مفعّلة على هذا الجهاز', en: 'Notifications enabled on this device' }) : localize({ ar: 'فعّل إشعارات الهاتف للتذكيرات', en: 'Enable phone notifications for reminders' })}</span>
+            <button type='button' className='btn btn--ghost' onClick={enablePushNotifications} disabled={pushBusy || pushEnabled}>
+              <Bell size={16} aria-hidden />{pushBusy ? localize({ ar: 'جارٍ التفعيل…', en: 'Enabling…' }) : pushEnabled ? localize({ ar: 'مفعّلة', en: 'Enabled' }) : localize({ ar: 'تفعيل الإشعارات', en: 'Enable notifications' })}
+            </button>
+          </div>
+        ) : null}
+        {pushNotice ? <p className='muted' role='status'>{pushNotice}</p> : null}
         <div className='tasks__head'>
           <h2 id='tasks-heading' className='section-title'>{localize(strings.heading)}</h2>
           <p className='muted' aria-live='polite'>{tasks.length - doneCount} {localize(strings.remaining)} · {doneCount} {localize(strings.completed)}</p>
