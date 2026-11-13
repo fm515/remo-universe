@@ -12,6 +12,7 @@ import {
   type ThemeChoice,
 } from '@/platform'
 import { strings } from './strings'
+import AccountPanel from './AccountPanel'
 
 function Row({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
@@ -43,6 +44,8 @@ export default function SettingsPage() {
         <h1>{localize(strings.settings)}</h1>
         <p className="lead">{localize(strings.settingsIntro)}</p>
       </header>
+
+      <AccountPanel />
 
       <section className="card settings">
         <Row title={localize(strings.language)} hint={localize(strings.languageHint)}>

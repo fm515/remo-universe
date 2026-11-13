@@ -586,3 +586,37 @@ code {
     padding: 22px;
   }
 }
+
+/* Account form */
+.auth-form,
+.auth-account {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 16px;
+  max-width: 520px;
+}
+.auth-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+.auth-form .input {
+  width: 100%;
+}
+.auth-form .btn,
+.auth-account .btn {
+  align-self: flex-start;
+}
+
+.auth-form .notice {
+  margin: 0;
+  align-items: flex-start;
+  overflow-wrap: anywhere;
+}
+.auth-form .notice--error {
+  border-color: #b42318;
+  border-inline-start-color: #b42318;
+}

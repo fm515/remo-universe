@@ -1,44 +1,41 @@
 # Roadmap
 
-Status of this document: **plan, not promise.** Nothing below exists until it is marked implemented in the
-relevant module `manifest.ts`.
+Status of this document: **plan, not promise.** A feature is considered implemented only when it is present
+in the app and its relevant tests pass.
 
-## Stage 0 — Foundation ✅ (this build, v0.2.0)
+## Stage 0 — Foundation ✅
 
 Modular monolith, design system, AR/EN + RTL/LTR, themes, persistent preferences, installable PWA,
-honest module pages, REMO LIFE task list, tests, CI.
+honest module pages, REMO LIFE task list, tests and CI.
 
-## Known gaps in the foundation
+## Stage 1 — Deploy the foundation ✅ / QA in progress
 
-- **Not verified on physical devices.** Verified by type-check, automated tests (including a jsdom smoke
-  test of the whole app) and production build. Layout, install flow and offline behaviour still need a
-  manual pass on real Android Chrome / Samsung Internet and on iOS Safari.
-- **Not deployed.** No hosting is configured yet.
-- **No ESLint / Prettier** configuration yet.
-- **No Arabic web font.** The system font is used; a self-hosted Arabic typeface is a design decision
-  still to be made (costs download size).
-- **No end-to-end browser tests** (Playwright) and no automated accessibility audit.
-- **Task list is device-only**: no backup, no sync, no due dates.
+- Production PWA hosted on Vercel with HTTPS.
+- CI checks type safety, module boundaries, tests and production build.
+- Remaining: physical-device QA on Android Chrome / Samsung Internet and iOS Safari, Lighthouse PWA/accessibility
+  audit, ESLint and Playwright browser tests.
 
-## Stage 1 — Ship the foundation
+## Stage 2 — Backend foundation (REMO CORE accounts + LIFE sync) — partially implemented
 
-1. Deploy `dist/` to a free static host with HTTPS; add a deploy job to CI.
-2. Real-device QA (Android first), Lighthouse PWA + accessibility audit, fix findings.
-3. Add ESLint (incl. `jsx-a11y`) and Playwright smoke tests.
+Implemented:
+1. Dedicated Supabase project for REMO UNIVERSE (separate from all other REMO projects).
+2. Browser-safe platform adapter using the public Supabase publishable key only.
+3. Email/password sign-up, sign-in, session restore and sign-out UI in Settings.
+4. Per-account local storage namespaces for preferences and LIFE tasks.
+5. Local-first task sync and account preference sync when online, with retry when connectivity returns.
+6. RLS enabled on profiles, user_preferences and life_tasks; policies restrict authenticated users to their own rows.
 
-## Stage 2 — Backend foundation (REMO NETWORK + CORE accounts)
-
-One managed backend on a free tier (e.g. Supabase: Postgres, Auth, Row Level Security, Edge Functions).
-
-1. Add a `platform/backend` adapter — modules never talk to the vendor SDK directly.
-2. Email / OAuth sign-in; profile table with RLS.
-3. Sync preferences and REMO LIFE tasks (local-first, then cloud).
-4. Only the public anon key is shipped to the client; every table is protected by RLS.
+Remaining:
+- Real mailbox end-to-end test for email confirmation and sign-in.
+- Verify sync across two real devices and test offline/conflict/deletion scenarios.
+- Profile editing and account recovery/password reset UI.
+- Optional Google OAuth only after its provider configuration is explicitly completed.
+- Further security/performance advisor review before expanding data access.
 
 ## Stage 3 — REMO AI
 
 1. Server-side function that proxies a real model provider; the key never reaches the client.
-2. Per-user rate limits and usage caps (needs Stage 2 accounts).
+2. Per-user rate limits and usage caps.
 3. Chat UI with streaming; clear labelling of the model in use.
 
 ## Stage 4 — REMO STORE

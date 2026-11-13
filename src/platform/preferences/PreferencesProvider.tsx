@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { LANGUAGE_META, type Direction, type Language, type Localized } from '../i18n'
 import { usePersistentState } from '../storage'
+import { supabase } from '../backend'
+import { useAuth } from '../auth'
 import {
   PREFERENCES_KEY,
   THEME_COLOR,
@@ -37,12 +39,63 @@ function useSystemPrefersLight(): boolean {
 }
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const [preferences, update] = usePersistentState(PREFERENCES_KEY, parseStored)
+  const { user } = useAuth()
+  const preferencesKey = user ? `${PREFERENCES_KEY}.user.${user.id}` : PREFERENCES_KEY
+  const [preferences, update] = usePersistentState(preferencesKey, parseStored)
+  const [cloudUserId, setCloudUserId] = useState<string | null>(null)
+  const [syncAttempt, setSyncAttempt] = useState(0)
   const systemPrefersLight = useSystemPrefersLight()
   const resolvedTheme = resolveTheme(preferences.theme, systemPrefersLight)
   const direction = LANGUAGE_META[preferences.language].dir
 
-  // The document element is the single source of truth for CSS (dir + data-theme).
+  useEffect(() => {
+    const retry = () => setSyncAttempt((value) => value + 1)
+    window.addEventListener('online', retry)
+    return () => window.removeEventListener('online', retry)
+  }, [])
+
+  useEffect(() => {
+    if (!user || !supabase) {
+      setCloudUserId(null)
+      return
+    }
+    let active = true
+    void (async () => {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('language, theme')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (!active) return
+      if (error) return
+      if (data) {
+        update(() => parsePreferences(data, browserLanguages()))
+      } else {
+        const { error: insertError } = await supabase.from('user_preferences').upsert({
+          user_id: user.id,
+          language: preferences.language,
+          theme: preferences.theme,
+          updated_at: new Date().toISOString(),
+        })
+        if (insertError) return
+      }
+      if (active) setCloudUserId(user.id)
+    })()
+    return () => { active = false }
+    // Load once per account; local preference changes are handled by the sync effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, syncAttempt])
+
+  useEffect(() => {
+    if (!user || !supabase || cloudUserId !== user.id) return
+    void supabase.from('user_preferences').upsert({
+      user_id: user.id,
+      language: preferences.language,
+      theme: preferences.theme,
+      updated_at: new Date().toISOString(),
+    })
+  }, [user?.id, cloudUserId, preferences.language, preferences.theme, syncAttempt])
+
   useEffect(() => {
     const root = document.documentElement
     root.lang = preferences.language
@@ -68,7 +121,6 @@ export function usePreferences(): PreferencesContextValue {
   return value
 }
 
-/** Returns a function that picks the current-language variant of a Localized value. */
 export function useLocalize(): <T>(value: Localized<T>) => T {
   const { language } = usePreferences()
   return useCallback(<T,>(value: Localized<T>) => value[language], [language])

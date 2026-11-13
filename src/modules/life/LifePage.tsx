@@ -1,6 +1,6 @@
 import { Plus, Trash2 } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
-import { ModulePage, Notice, useLocalize, usePersistentState } from '@/platform'
+import { useEffect, useState, type FormEvent } from 'react'
+import { ModulePage, Notice, supabase, useAuth, useLocalize, usePersistentState } from '@/platform'
 import { manifest } from './manifest'
 import { strings } from './strings'
 import {
@@ -18,8 +18,95 @@ import {
 
 export default function LifePage() {
   const localize = useLocalize()
-  const [tasks, updateTasks] = usePersistentState(TASKS_KEY, parseTasks)
+  const { user } = useAuth()
+  const storageKey = user ? `remo.life.tasks.v1.user.${user.id}` : TASKS_KEY
+  const [tasks, updateTasks] = usePersistentState(storageKey, parseTasks)
   const [draft, setDraft] = useState('')
+  const [cloudReady, setCloudReady] = useState(false)
+  const [syncNotice, setSyncNotice] = useState('')
+  const [syncAttempt, setSyncAttempt] = useState(0)
+
+  useEffect(() => {
+    const retry = () => setSyncAttempt((value) => value + 1)
+    window.addEventListener('online', retry)
+    return () => window.removeEventListener('online', retry)
+  }, [])
+
+  useEffect(() => {
+    const client = supabase
+    if (!user || !client) {
+      setCloudReady(false)
+      setSyncNotice('')
+      return
+    }
+    let active = true
+    setCloudReady(false)
+    void (async () => {
+      const { data, error } = await client
+        .from('life_tasks')
+        .select('id, title, completed_at, created_at, updated_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      if (!active) return
+      if (error) {
+        setSyncNotice(error.message)
+        return
+      }
+      const remote = (data ?? []).map((row) => ({
+        id: row.id,
+        title: row.title,
+        done: Boolean(row.completed_at),
+        createdAt: row.created_at ? new Date(row.created_at).getTime() : 0,
+      }))
+      let stored: unknown
+      try { stored = JSON.parse(window.localStorage.getItem(storageKey) ?? '[]') } catch { stored = [] }
+      const local = parseTasks(stored)
+      const byId = new Map(remote.map((task) => [task.id, task]))
+      for (const task of local) byId.set(task.id, task)
+      const merged = [...byId.values()].sort((a, b) => b.createdAt - a.createdAt).slice(0, MAX_TASKS)
+      updateTasks(() => merged)
+      setCloudReady(true)
+    })()
+    return () => { active = false }
+  }, [user?.id, storageKey, syncAttempt])
+
+  useEffect(() => {
+    const client = supabase
+    if (!user || !client || !cloudReady) return
+    let active = true
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        const { data: remote, error: readError } = await client
+          .from('life_tasks').select('id').eq('user_id', user.id)
+        if (!active) return
+        if (readError) {
+          setSyncNotice(readError.message)
+          return
+        }
+        const localIds = new Set(tasks.map((task) => task.id))
+        const deletedIds = (remote ?? []).map((row) => row.id).filter((id) => !localIds.has(id))
+        if (deletedIds.length) {
+          const { error } = await client.from('life_tasks').delete().eq('user_id', user.id).in('id', deletedIds)
+          if (error) { setSyncNotice(error.message); return }
+        }
+        if (tasks.length) {
+          const rows = tasks.map((task) => ({
+            id: task.id,
+            user_id: user.id,
+            title: task.title,
+            completed_at: task.done ? new Date(task.createdAt || Date.now()).toISOString() : null,
+            created_at: new Date(task.createdAt || Date.now()).toISOString(),
+            updated_at: new Date().toISOString(),
+          }))
+          const { error } = await client.from('life_tasks').upsert(rows, { onConflict: 'id' })
+          if (error) { setSyncNotice(error.message); return }
+        }
+        if (active) setSyncNotice('')
+      })()
+    }, 500)
+    return () => { active = false; window.clearTimeout(timer) }
+  }, [user?.id, cloudReady, tasks, syncAttempt])
+
 
   const doneCount = tasks.filter((task) => task.done).length
   const full = tasks.length >= MAX_TASKS
@@ -35,6 +122,7 @@ export default function LifePage() {
   return (
     <ModulePage manifest={manifest}>
       <section className="card tasks" aria-labelledby="tasks-heading">
+        {user ? <p className="muted" role="status">{cloudReady ? (syncNotice || localize(strings.syncReady)) : (syncNotice || localize(strings.syncLoading))}</p> : null}
         <div className="tasks__head">
           <h2 id="tasks-heading" className="section-title">
             {localize(strings.heading)}
@@ -99,7 +187,7 @@ export default function LifePage() {
           </button>
         )}
 
-        <Notice>{localize(strings.storage)}</Notice>
+        <Notice>{user ? 'تُحفظ المهام على هذا الجهاز وتُزامن مع حسابك عند توفر الاتصال.' : localize(strings.storage)}</Notice>
       </section>
     </ModulePage>
   )
