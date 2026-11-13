@@ -664,3 +664,16 @@ code {
   border-color: #b42318;
   border-inline-start-color: #b42318;
 }
+
+.task { display: block; padding: 0 12px 10px; }
+.task__main, .task__reminders-head, .task__reminder, .task__reminder-editor { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.task__main { min-width: 0; }
+.task__reminders { display: grid; gap: 7px; padding-inline-start: 34px; }
+.task__reminders-head { flex-wrap: wrap; }
+.task__add-reminder { min-height: 36px; padding: 5px 10px; font-size: 0.82rem; }
+.task__reminder { min-height: 36px; padding: 4px 8px; border-radius: 9px; background: var(--surface-2); font-size: 0.88rem; }
+.task__reminder .icon-btn { min-height: 32px; min-width: 32px; }
+.task__reminder-editor { flex-wrap: wrap; align-items: end; padding: 8px; border: 1px dashed var(--border-strong); border-radius: 10px; }
+.task__reminder-editor .tasks__due-field { flex: 1 1 190px; }
+.task__reminder-actions { display: inline-flex; align-items: center; gap: 4px; }
+.task__reminder-editor .input { flex: 1 1 190px; }
