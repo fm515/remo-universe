@@ -64,7 +64,10 @@ export default function LifePage() {
       try { stored = JSON.parse(window.localStorage.getItem(storageKey) ?? '[]') } catch { stored = [] }
       const local = parseTasks(stored)
       const byId = new Map(remote.map((task) => [task.id, task]))
-      for (const task of local) byId.set(task.id, task)
+      for (const task of local) {
+        const remoteTask = byId.get(task.id)
+        byId.set(task.id, remoteTask ? { ...task, dueAt: task.dueAt ?? remoteTask.dueAt } : task)
+      }
       const merged = [...byId.values()].sort((a, b) => b.createdAt - a.createdAt).slice(0, MAX_TASKS)
       updateTasks(() => merged)
       setCloudReady(true)
