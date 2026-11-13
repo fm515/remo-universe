@@ -4,7 +4,7 @@ export const strings = {
   heading: { ar: 'مهامي', en: 'My tasks' },
   inputLabel: { ar: 'مهمة جديدة', en: 'New task' },
   placeholder: { ar: 'ما الذي تريد إنجازه؟', en: 'What do you want to get done?' },
-  dueDate: { ar: 'موعد الإنجاز', en: 'Due date' },
+  dueDate: { ar: 'موعد الإنجاز (التاريخ والوقت)', en: 'Due date and time' },
   due: { ar: 'موعدها', en: 'Due' },
   reminders: { ar: 'التذكيرات', en: 'Reminders' },
   addReminder: { ar: 'إضافة تذكير', en: 'Add reminder' },
