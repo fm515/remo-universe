@@ -15,11 +15,11 @@ export interface Task {
 }
 
 export function normalizeTitle(input: string): string {
-  return input.replace(/\\s+/g, ' ').trim().slice(0, MAX_TITLE_LENGTH)
+  return input.replace(/\s+/g, ' ').trim().slice(0, MAX_TITLE_LENGTH)
 }
 
 function normalizeDueDate(value: unknown): string | null {
-  return typeof value === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(value) ? value : null
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null
 }
 
 /** Accepts anything read from storage; drops whatever is not a valid task. Never throws. */
