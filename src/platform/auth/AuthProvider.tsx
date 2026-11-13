@@ -48,4 +48,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const signIn = useCallback(async (email: string, password: string): Promise<AuthResult>¶»§q«^
+  const signIn = useCallback(async (email: string, password: string): Promise<AuthResult> => {
+    if (!supabase) return { error: 'Account service is not configured yet.' }
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    return { error: error?.message ?? null }
+  }, [])
+
+  const signUp = useCallback(async (email: string, password: string, displayName: string): Promise<AuthResult> => {
+    if (!supabase) return { error: 'Account service is not configured yet.' }
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { data: { display_name: displayName.trim() || null } },
+    })
+    return {
+      error: error?.message ?? null,
+      needsEmailConfirmation: !error && !data.session,
+    }
+  }, [])
+
+  const signOut = useCallback(async (): Promise<AuthResult> => {
+    if (!supabase) return { error: null }
+    const { error } = await supabase.auth.signOut()
+    return { error: error?.message ?? null }
+  }, [])
+
+  const value = useMemo(
+    () => ({ user, loading, configured: isSupabaseConfigured, signIn, signUp, signOut }),
+    [user, loading, signIn, signUp, signOut],
+  )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
+
+export function useAuth(): AuthContextValue {
+  const value = useContext(AuthContext)
+  if (!value) throw new Error('useAuth must be used inside <AuthProvider>')
+  return value
+}

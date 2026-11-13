@@ -43,4 +43,6 @@ export default function App() {
         </HashRouter>
       </ModuleRegistryProvider>
       </PreferencesProvider>
-    </AuthProv¶»§q«^
+    </AuthProvider>
+  )
+}

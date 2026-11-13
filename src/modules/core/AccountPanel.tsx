@@ -16,4 +16,97 @@ const copy = {
   switchToSignUp: { ar: 'ليس لديك حساب؟ أنشئ حساباً', en: 'New here? Create an account' },
   switchToSignIn: { ar: 'لديك حساب بالفعل؟ سجّل الدخول', en: 'Already have an account? Sign in' },
   signOut: { ar: 'تسجيل الخروج', en: 'Sign out' },
-  confirmEmail: { ar: 'تم إنشاء الحساب. افتح بريدك الإلكتروني واضغ���q�^
+  confirmEmail: { ar: 'تم إنشاء الحساب. افتح بريدك الإلكتروني واضغط رابط التأكيد، ثم عد إلى التطبيق وسجّل الدخول.', en: 'Account created. Check your inbox and confirm your email, then return here to sign in.' },
+  signedInMessage: { ar: 'حسابك متصل. ستتم مزامنة المهام والإعدادات عند توفر الاتصال.', en: 'Your account is connected. Tasks and preferences sync when a connection is available.' },
+  passwordHint: { ar: 'استخدم 8 أحرف على الأقل.', en: 'Use at least 8 characters.' },
+  working: { ar: 'جارٍ التنفيذ…', en: 'Working…' },
+} satisfies Record<string, Localized<string>>
+
+export default function AccountPanel() {
+  const localize = useLocalize()
+  const { user, loading, configured, signIn, signUp, signOut } = useAuth()
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    setBusy(true)
+    setMessage('')
+    setError('')
+    try {
+      const result = mode === 'signin'
+        ? await signIn(email, password)
+        : await signUp(email, password, displayName)
+      if (result.error) setError(result.error)
+      else if (result.needsEmailConfirmation) setMessage(localize(copy.confirmEmail))
+      else if (mode === 'signup') setMessage(localize(copy.signedInMessage))
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Something went wrong.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const logout = async () => {
+    setBusy(true)
+    setError('')
+    const result = await signOut()
+    if (result.error) setError(result.error)
+    setBusy(false)
+  }
+
+  return (
+    <section className="card" aria-labelledby="account-heading">
+      <h2 id="account-heading" className="section-title">{localize(copy.title)}</h2>
+      <p className="muted">{localize(copy.intro)}</p>
+
+      {loading ? <p className="muted" role="status">{localize(copy.loading)}</p> : null}
+
+      {!loading && !configured ? <p className="muted" role="status">{localize(copy.unavailable)}</p> : null}
+
+      {!loading && configured && user ? (
+        <div className="auth-account">
+          <p><strong>{localize(copy.signedIn)}:</strong> <span dir="ltr">{user.email}</span></p>
+          <p className="muted">{localize(copy.signedInMessage)}</p>
+          <button className="btn btn--ghost" type="button" disabled={busy} onClick={() => void logout()}>
+            {busy ? localize(copy.working) : localize(copy.signOut)}
+          </button>
+        </div>
+      ) : null}
+
+      {!loading && configured && !user ? (
+        <form className="auth-form" onSubmit={(event) => void submit(event)}>
+          {mode === 'signup' ? (
+            <label>
+              <span>{localize(copy.displayName)}</span>
+              <input className="input" value={displayName} maxLength={80} autoComplete="name" onChange={(event) => setDisplayName(event.target.value)} />
+            </label>
+          ) : null}
+          <label>
+            <span>{localize(copy.email)}</span>
+            <input className="input" type="email" value={email} required autoComplete="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} />
+          </label>
+          <label>
+            <span>{localize(copy.password)}</span>
+            <input className="input" type="password" value={password} required minLength={8} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} onChange={(event) => setPassword(event.target.value)} />
+          </label>
+          {mode === 'signup' ? <p className="muted">{localize(copy.passwordHint)}</p> : null}
+          {error ? <p className="notice notice--error" role="alert">{error}</p> : null}
+          {message ? <p className="notice" role="status">{message}</p> : null}
+          <button className="btn btn--primary" type="submit" disabled={busy}>
+            {busy ? localize(copy.working) : localize(mode === 'signin' ? copy.signIn : copy.signUp)}
+          </button>
+          <button className="btn btn--ghost" type="button" disabled={busy} onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setMessage('') }}>
+            {localize(mode === 'signin' ? copy.switchToSignUp : copy.switchToSignIn)}
+          </button>
+        </form>
+      ) : null}
+      {error && user ? <p className="notice notice--error" role="alert">{error}</p> : null}
+    </section>
+  )
+}

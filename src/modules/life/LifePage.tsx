@@ -46,4 +46,149 @@ export default function LifePage() {
         .from('life_tasks')
         .select('id, title, completed_at, created_at, updated_at')
         .eq('user_id', user.id)
-        .order(���q�^
+        .order('created_at', { ascending: false })
+      if (!active) return
+      if (error) {
+        setSyncNotice(error.message)
+        return
+      }
+      const remote = (data ?? []).map((row) => ({
+        id: row.id,
+        title: row.title,
+        done: Boolean(row.completed_at),
+        createdAt: row.created_at ? new Date(row.created_at).getTime() : 0,
+      }))
+      let stored: unknown
+      try { stored = JSON.parse(window.localStorage.getItem(storageKey) ?? '[]') } catch { stored = [] }
+      const local = parseTasks(stored)
+      const byId = new Map(remote.map((task) => [task.id, task]))
+      for (const task of local) byId.set(task.id, task)
+      const merged = [...byId.values()].sort((a, b) => b.createdAt - a.createdAt).slice(0, MAX_TASKS)
+      updateTasks(() => merged)
+      setCloudReady(true)
+    })()
+    return () => { active = false }
+  }, [user?.id, storageKey, syncAttempt])
+
+  useEffect(() => {
+    const client = supabase
+    if (!user || !client || !cloudReady) return
+    let active = true
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        const { data: remote, error: readError } = await client
+          .from('life_tasks').select('id').eq('user_id', user.id)
+        if (!active) return
+        if (readError) {
+          setSyncNotice(readError.message)
+          return
+        }
+        const localIds = new Set(tasks.map((task) => task.id))
+        const deletedIds = (remote ?? []).map((row) => row.id).filter((id) => !localIds.has(id))
+        if (deletedIds.length) {
+          const { error } = await client.from('life_tasks').delete().eq('user_id', user.id).in('id', deletedIds)
+          if (error) { setSyncNotice(error.message); return }
+        }
+        if (tasks.length) {
+          const rows = tasks.map((task) => ({
+            id: task.id,
+            user_id: user.id,
+            title: task.title,
+            completed_at: task.done ? new Date(task.createdAt || Date.now()).toISOString() : null,
+            created_at: new Date(task.createdAt || Date.now()).toISOString(),
+            updated_at: new Date().toISOString(),
+          }))
+          const { error } = await client.from('life_tasks').upsert(rows, { onConflict: 'id' })
+          if (error) { setSyncNotice(error.message); return }
+        }
+        if (active) setSyncNotice('')
+      })()
+    }, 500)
+    return () => { active = false; window.clearTimeout(timer) }
+  }, [user?.id, cloudReady, tasks, syncAttempt])
+
+
+  const doneCount = tasks.filter((task) => task.done).length
+  const full = tasks.length >= MAX_TASKS
+  const canAdd = normalizeTitle(draft) !== '' && !full
+
+  const onSubmit = (event: FormEvent) => {
+    event.preventDefault()
+    if (!canAdd) return
+    updateTasks((previous) => addTask(previous, draft, createId(), Date.now()))
+    setDraft('')
+  }
+
+  return (
+    <ModulePage manifest={manifest}>
+      <section className="card tasks" aria-labelledby="tasks-heading">
+        {user ? <p className="muted" role="status">{cloudReady ? (syncNotice || localize(strings.syncReady)) : (syncNotice || localize(strings.syncLoading))}</p> : null}
+        <div className="tasks__head">
+          <h2 id="tasks-heading" className="section-title">
+            {localize(strings.heading)}
+          </h2>
+          <p className="muted" aria-live="polite">
+            {tasks.length - doneCount} {localize(strings.remaining)} · {doneCount} {localize(strings.completed)}
+          </p>
+        </div>
+
+        <form className="tasks__form" onSubmit={onSubmit}>
+          <label className="visually-hidden" htmlFor="task-input">
+            {localize(strings.inputLabel)}
+          </label>
+          <input
+            id="task-input"
+            className="input"
+            dir="auto"
+            value={draft}
+            maxLength={MAX_TITLE_LENGTH}
+            placeholder={localize(strings.placeholder)}
+            autoComplete="off"
+            enterKeyHint="done"
+            onChange={(event) => setDraft(event.target.value)}
+          />
+          <button type="submit" className="btn btn--primary" disabled={!canAdd}>
+            <Plus size={18} aria-hidden />
+            {localize(strings.add)}
+          </button>
+        </form>
+        {full && <p className="muted">{localize(strings.full)}</p>}
+
+        {tasks.length === 0 ? (
+          <p className="empty">{localize(strings.empty)}</p>
+        ) : (
+          <ul className="tasks__list">
+            {tasks.map((task) => (
+              <li key={task.id} className="task" data-done={task.done}>
+                <label className="task__label">
+                  <input
+                    type="checkbox"
+                    checked={task.done}
+                    onChange={() => updateTasks((previous) => toggleTask(previous, task.id))}
+                  />
+                  <span dir="auto">{task.title}</span>
+                </label>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label={`${localize(strings.delete)}: ${task.title}`}
+                  onClick={() => updateTasks((previous) => removeTask(previous, task.id))}
+                >
+                  <Trash2 size={18} aria-hidden />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {doneCount > 0 && (
+          <button type="button" className="btn btn--ghost" onClick={() => updateTasks(clearCompleted)}>
+            {localize(strings.clearCompleted)}
+          </button>
+        )}
+
+        <Notice>{user ? 'تُحفظ المهام على هذا الجهاز وتُزامن مع حسابك عند توفر الاتصال.' : localize(strings.storage)}</Notice>
+      </section>
+    </ModulePage>
+  )
+}

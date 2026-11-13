@@ -39,4 +39,82 @@ function useSystemPrefersLight(): boolean {
 }
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  cons¶»§q«^
+  const { user } = useAuth()
+  const preferencesKey = user ? `${PREFERENCES_KEY}.user.${user.id}` : PREFERENCES_KEY
+  const [preferences, update] = usePersistentState(preferencesKey, parseStored)
+  const [cloudUserId, setCloudUserId] = useState<string | null>(null)
+  const systemPrefersLight = useSystemPrefersLight()
+  const resolvedTheme = resolveTheme(preferences.theme, systemPrefersLight)
+  const direction = LANGUAGE_META[preferences.language].dir
+
+  useEffect(() => {
+    if (!user || !supabase) {
+      setCloudUserId(null)
+      return
+    }
+    let active = true
+    void (async () => {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('language, theme')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (!active) return
+      if (error) return
+      if (data) {
+        update(() => parsePreferences(data, browserLanguages()))
+      } else {
+        const { error: insertError } = await supabase.from('user_preferences').upsert({
+          user_id: user.id,
+          language: preferences.language,
+          theme: preferences.theme,
+          updated_at: new Date().toISOString(),
+        })
+        if (insertError) return
+      }
+      if (active) setCloudUserId(user.id)
+    })()
+    return () => { active = false }
+    // Load once per account; local preference changes are handled by the sync effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, supabase])
+
+  useEffect(() => {
+    if (!user || !supabase || cloudUserId !== user.id) return
+    void supabase.from('user_preferences').upsert({
+      user_id: user.id,
+      language: preferences.language,
+      theme: preferences.theme,
+      updated_at: new Date().toISOString(),
+    })
+  }, [user?.id, cloudUserId, preferences.language, preferences.theme])
+
+  useEffect(() => {
+    const root = document.documentElement
+    root.lang = preferences.language
+    root.dir = direction
+    root.dataset.theme = resolvedTheme
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[resolvedTheme])
+  }, [preferences.language, direction, resolvedTheme])
+
+  const setLanguage = useCallback((language: Language) => update((p) => ({ ...p, language })), [update])
+  const setTheme = useCallback((theme: ThemeChoice) => update((p) => ({ ...p, theme })), [update])
+  const reset = useCallback(() => update(() => parsePreferences(undefined, browserLanguages())), [update])
+
+  const value = useMemo(
+    () => ({ ...preferences, direction, resolvedTheme, setLanguage, setTheme, reset }),
+    [preferences, direction, resolvedTheme, setLanguage, setTheme, reset],
+  )
+  return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>
+}
+
+export function usePreferences(): PreferencesContextValue {
+  const value = useContext(PreferencesContext)
+  if (!value) throw new Error('usePreferences must be used inside <PreferencesProvider>')
+  return value
+}
+
+export function useLocalize(): <T>(value: Localized<T>) => T {
+  const { language } = usePreferences()
+  return useCallback(<T,>(value: Localized<T>) => value[language], [language])
+}
