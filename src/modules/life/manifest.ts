@@ -22,12 +22,21 @@ export const manifest: ModuleManifest = {
       },
     },
     {
-      id: 'reminders',
-      status: 'partial',
-      title: { ar: 'المواعيد والتنبيهات', en: 'Due dates and reminders' },
+      id: 'due-dates',
+      status: 'implemented',
+      title: { ar: 'مواعيد إنجاز المهام', en: 'Task due dates' },
       description: {
-        ar: 'يمكن تحديد موعد إنجاز للمهمة. التنبيهات والإشعارات الفعلية ما زالت قيد التخطيط.',
-        en: 'Task due dates are available. Actual alerts and notifications are still planned.',
+        ar: 'حدد موعد إنجاز اختياريًا لكل مهمة، ويُحفظ محليًا ويُزامن مع الحساب.',
+        en: 'Set an optional due date for each task; dates are stored locally and synced with the account.',
+      },
+    },
+    {
+      id: 'reminders',
+      status: 'planned',
+      title: { ar: 'التنبيهات والتذكيرات', en: 'Alerts and reminders' },
+      description: {
+        ar: 'إشعارات فعلية قبل موعد المهمة ما زالت قيد التخطيط.',
+        en: 'Actual notifications before a task is due are still planned.',
       },
     },
     {
@@ -44,8 +53,8 @@ export const manifest: ModuleManifest = {
       status: 'implemented',
       title: { ar: 'مزامنة المهام للحساب', en: 'Account task sync' },
       description: {
-        ar: 'تُزامن مهام الحساب بين الجلسات عند توفر الإنترنت. مهام الضيف تبقى على الجهاز.',
-        en: 'Account tasks sync across sessions when online. Guest tasks remain on-device.',
+        ar: 'تُزامن مهام الحساب بين الجلسات والأجهزة عند توفر الإنترنت. مهام الضيف تبقى على الجهاز.',
+        en: 'Account tasks sync across sessions and devices when online. Guest tasks remain on-device.',
       },
     },
   ],
