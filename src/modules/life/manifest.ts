@@ -8,8 +8,8 @@ export const manifest: ModuleManifest = {
   icon: ListChecks,
   tagline: { ar: 'تنظيم الحياة والمهام', en: 'Life and task organisation' },
   description: {
-    ar: 'أدوات شخصية لتنظيم يومك. قائمة المهام تعمل محلياً وتُزامن مع حسابك عند تسجيل الدخول وتوفر الاتصال.',
-    en: 'Personal tools for organising your day. Tasks work locally and sync to your account when signed in and online.',
+    ar: 'أدوات شخصية لتنظيم يومك. أضف المهام وحدد مواعيد إنجازها، وتُزامن مهام الحساب عند توفر الاتصال.',
+    en: 'Personal tools for organising your day. Add tasks, set due dates, and sync account tasks when online.',
   },
   features: [
     {
@@ -17,17 +17,17 @@ export const manifest: ModuleManifest = {
       status: 'implemented',
       title: { ar: 'قائمة المهام', en: 'Task list' },
       description: {
-        ar: 'أضف المهام وأنجزها واحذفها. تعمل دون اتصال، وتُزامن مهام الحساب عند تسجيل الدخول وتوفر الإنترنت.',
-        en: 'Add, complete and delete tasks. Works offline; account tasks sync when signed in and online.',
+        ar: 'أضف المهام وأنجزها واحذفها وحدد موعد إنجاز اختياريًا. تعمل دون اتصال، وتُزامن مهام الحساب عند تسجيل الدخول وتوفر الإنترنت.',
+        en: 'Add, complete and delete tasks with an optional due date. Works offline; account tasks sync when signed in and online.',
       },
     },
     {
       id: 'reminders',
-      status: 'planned',
-      title: { ar: 'التذكيرات والمواعيد', en: 'Reminders and due dates' },
+      status: 'partial',
+      title: { ar: 'المواعيد والتنبيهات', en: 'Due dates and reminders' },
       description: {
-        ar: 'تواريخ استحقاق وتنبيهات للمهام.',
-        en: 'Due dates and alerts for tasks.',
+        ar: 'يمكن تحديد موعد إنجاز للمهمة. التنبيهات والإشعارات الفعلية ما زالت قيد التخطيط.',
+        en: 'Task due dates are available. Actual alerts and notifications are still planned.',
       },
     },
     {
@@ -44,8 +44,8 @@ export const manifest: ModuleManifest = {
       status: 'implemented',
       title: { ar: 'مزامنة المهام للحساب', en: 'Account task sync' },
       description: {
-        ar: 'تُزامن مهام الحساب بين الجلسات عند توفر الإنترنت. مهام الضيف تبقى على الجهاز، واختبار المزامنة على جهازين حقيقيين ما زال مطلوباً.',
-        en: 'Account tasks sync across sessions when online. Guest tasks remain on-device; two-device end-to-end testing is still required.',
+        ar: 'تُزامن مهام الحساب بين الجلسات عند توفر الإنترنت. مهام الضيف تبقى على الجهاز.',
+        en: 'Account tasks sync across sessions when online. Guest tasks remain on-device.',
       },
     },
   ],
