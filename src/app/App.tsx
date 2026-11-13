@@ -1,5 +1,5 @@
-import { HashRouter, Link, Route, Routes } from 'react-router-dom'
-import { AuthProvider, ModuleRegistryProvider, PreferencesProvider, ROUTES, useLocalize } from '@/platform'
+import { HashRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
+import { AuthProvider, ModuleRegistryProvider, PreferencesProvider, ROUTES, useAuth, useLocalize } from '@/platform'
 import { AppShell } from './AppShell'
 import { modules } from './registry'
 import { strings } from './strings'
@@ -17,6 +17,27 @@ function NotFound() {
       </div>
     </div>
   )
+}
+
+/**
+ * Supabase recovery links deliver their session in the URL fragment. Because
+ * this app uses HashRouter, that fragment can briefly look like an unknown
+ * route (for example /access_token=...). Wait for auth URL detection, then
+ * send an active password-recovery session to the account form.
+ */
+function RouteFallback() {
+  const { loading, recoveryMode } = useAuth()
+  const localize = useLocalize()
+
+  if (loading) {
+    return <div className="page"><p className="muted" role="status">{localize(strings.loading)}</p></div>
+  }
+
+  if (recoveryMode) {
+    return <Navigate to={ROUTES.settings} replace />
+  }
+
+  return <NotFound />
 }
 
 /** Every route comes from a module manifest — the shell has no knowledge of module internals. */
@@ -37,7 +58,7 @@ export default function App() {
               {routes.map(({ path, Page }) => (
                 <Route key={path} path={path} element={<Page />} />
               ))}
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<RouteFallback />} />
             </Routes>
           </AppShell>
         </HashRouter>
